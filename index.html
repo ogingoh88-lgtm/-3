@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HA-NET INTERFACE v4.02</title>
+    <style>
+        :root {
+            --bg: #000b14;
+            --card: #06121e;
+            --neon: #00f2ff;
+            --danger: #ff2d55;
+            --info: #007aff;
+            --text: #e0f7ff;
+            --sub: #507a95;
+            --line: rgba(0, 242, 255, 0.2);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Pretendard', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            background-image: radial-gradient(var(--line) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        header {
+            padding: 15px 20px;
+            border-bottom: 2px solid var(--neon);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .system-status { font-size: 0.65rem; color: var(--neon); letter-spacing: 1px; text-align: right;}
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .section-label { font-size: 0.7rem; color: var(--neon); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
+
+        .main-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .stat-item { background: var(--card); border: 1px solid var(--line); padding: 10px; border-radius: 5px; text-align: center; }
+        .stat-val { display: block; font-size: 1.2rem; font-weight: 900; color: var(--neon); }
+        .stat-lbl { font-size: 0.6rem; color: var(--sub); }
+
+        .card {
+            background: var(--card); border-radius: 8px; padding: 15px; margin-bottom: 12px;
+            border: 1px solid var(--line); cursor: pointer; position: relative; overflow: hidden;
+        }
+        .card::before { content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--neon); }
+        .card h4 { margin: 0 0 5px 0; font-size: 0.9rem; letter-spacing: -0.5px; }
+        .card p { margin: 0; font-size: 0.75rem; color: var(--sub); }
+
+        .search-area { margin: 35px 0; background: rgba(0, 242, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid var(--line); }
+        .search-input {
+            width: 100%; padding: 12px; background: #000; border: 1px solid var(--neon);
+            color: white; border-radius: 4px; box-sizing: border-box; font-size: 0.9rem;
+        }
+        .recent-tag {
+            display: inline-block; padding: 8px 15px; background: #001a33; border: 1px solid var(--neon);
+            border-radius: 4px; font-size: 0.8rem; margin-top: 15px; color: var(--neon); cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+        .super-bold {
+            font-weight: 900;
+            text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+        }
+        .neon-line {
+            border: none;
+            height: 1px;
+            background: var(--neon);
+            box-shadow: 0 0 10px var(--neon);
+            margin: 15px 0;
+            opacity: 0.7;
+        }
+       
+        #report-page { display: none; }
+        .profile-section { display: flex; gap: 20px; align-items: center; margin-bottom: 30px; }
+        .profile-img {
+            width: 100px; height: 100px; border: 2px solid var(--neon); background: #001a33;
+            flex-shrink: 0; border-radius: 5px; position: relative;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .profile-img img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-img::after { content: "ENCRYPTED"; position: absolute; bottom: 0; width: 100%; background: rgba(0, 242, 255, 0.4); font-size: 0.5rem; color: white; text-align: center; }
+        
+        .brief-info h2 { margin: 0; font-size: 1.5rem; color: var(--neon); }
+        .brief-table { font-size: 0.75rem; color: var(--sub); margin-top: 5px; width: 100%; }
+        .brief-table td { padding: 2px 0; }
+        .label { color: var(--neon); width: 60px; font-weight: bold; }
+
+        .detail-box { background: rgba(0, 242, 255, 0.03); border: 1px solid var(--line); border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .detail-box h3 { font-size: 0.9rem; margin: 0 0 10px 0; color: var(--neon); display: flex; align-items: center; gap: 5px; }
+
+        .secret-area { margin-top: 40px; border: 2px dashed var(--danger); padding: 20px; position: relative; border-radius: 10px; }
+        .blur { filter: blur(20px); pointer-events: none; transition: 0.8s; }
+        .secret-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.8); z-index: 10; cursor: pointer; text-align: center;
+        }
+        .unlocked .blur { filter: blur(0); pointer-events: auto; }
+        .unlocked .secret-overlay { display: none; }
+
+        .secret-photo-box { width: 100%; height: 220px; background: #001a33; border: 1px solid var(--line); margin-bottom: 15px; border-radius: 5px; overflow: hidden; }
+        .secret-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- [모달 UI 개선 및 중앙 고정] --- */
+        #content-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            background: rgba(0, 4, 10, 0.9); 
+            backdrop-filter: blur(8px);
+            z-index: 2000; 
+            align-items: center; /* 수직 중앙 */
+            justify-content: center; /* 수평 중앙 */
+        }
+
+        .modal-window {
+            width: 90%;
+            max-width: 450px;
+            max-height: 80vh; /* 화면 높이의 80% 제한 */
+            background: var(--card);
+            border: 1px solid var(--neon);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.15);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--line);
+            flex-shrink: 0;
+        }
+
+        .modal-content {
+            padding: 20px;
+            overflow-y: auto; /* ★ 내부 스크롤 허용 */
+            flex-grow: 1;
+            white-space: pre-wrap; /* 줄바꿈 반영 */
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--line);
+            flex-shrink: 0;
+        }
+
+        /* 커스텀 스크롤바 (사이버 디자인) */
+        .modal-content::-webkit-scrollbar { width: 4px; }
+        .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: 900; color: var(--neon); font-size: 1.1rem;">HA-NET <span style="font-weight: 100;">v4.02</span></div>
+    <div class="system-status">
+        ● SECURITY: HIGH<br>
+        2026-02-11 20:04:15
+    </div>
+</header>
+
+<div id="home-page" class="container">
+    <div class="main-stat-grid">
+        <div class="stat-item"><span class="stat-lbl">Active Heroes</span><span class="stat-val">12,402</span></div>
+        <div class="stat-item"><span class="stat-lbl">Ether Density</span><span class="stat-val">42.8%</span></div>
+    </div>
+
+    <div class="section-label">CRITICAL NOTICES</div>
+    <div class="card" onclick="showModal('도심 픽셀화 경보', '현재 강남역 인근 반경 2km 이내가 픽셀화로 인해 붕괴 중입니다. S급 빌런 이모지 목격 제보가 잇따르고 있으니 접근을 금합니다.')">
+        <h4>[경보] 광역 픽셀화 현상 발생</h4>
+        <p>Target: Emoji | Danger: Catastrophic</p>
+    </div>
+    <div class="card" onclick="showModal('[속보] S급 이레귤러 ‘이모지’, 중심가 ‘픽셀 테러’... 인명 피해 0명의 미스터리','[서울=KHA 뉴스룸] 오늘 오후 2시경, 코드명 ‘이모지’가 서울 중심가 쇼핑몰에 나타나 광범위한 픽셀화 현상을 일으켰습니다. 현장에 출동한 A급 히어로 ‘그라비티’가 교전을 시도했으나, 이모지는 “뉴비가 너무 들이대네, 밸붕(밸런스 붕괴)이야~”라는 조롱과 함께 그라비티의 중력장을 8비트 정육면체로 분해해버렸습니다. \n\n특이한 점은 이번에도 사상자가 단 한 명도 없다는 점입니다. 이모지는 픽셀화된 건물을 다시 재조합해 ‘초대형 아케이드 게임기’ 형상으로 바꿔놓은 뒤, “오늘 일퀘(일일 퀘스트) 끝! 수고링~”이라는 말을 남기고 글리치 현상과 함께 사라졌습니다. 협회는 현재 해당 구역의 물리 복구 작업을 진행 중입니다.')">
+        <h4>[속보] S급 이레귤러 ‘이모지’, 중심가 ‘픽셀 테러’... 인명 피해 0명의 미스터리</h4>
+        <p>[서울=KHA 뉴스룸]</p>
+    </div>
+    <div class="card" onclick="showModal('히어로 협회 관리국에서 알립니다.', '최근 빌런 연합 산하 조직을 중심으로 ‘에테르 캔디’라 불리는 미인증 이능력 증폭제가 급속도로 확산되고 있습니다.\n\n위험성: 투약 시 에테르 반응성이 폭주하여 일시적으로 화력이 증폭되나, 심각한 세포 괴사와 영구적인 능력 상실을 초래합니다.\n\n협조 요청: 현장 활동 중 해당 물품을 발견하거나 의심 거래 정황을 포착할 경우, 즉시 [특수물질 수사팀]으로 신고하십시오.\n\n본 약물은 등급 심사 규정 위반 및 형사 처벌 대상임을 엄중히 경고합니다.\n\n— 히어로 협회(HA) 중앙 본부 —')">
+        <h4>[공지] 이능력 증폭제 ‘에테르 캔디’ 유통 주의보</h4>
+        <p>[KHA] 한국 히어로 협회</p>
+    </div>
+    <div class="card" onclick="showModal('[히어로 랭킹] A급 히어로 ‘블레이즈’, S급 승급 심사 탈락', '불꽃 조절 능력으로 도시 수호에 기여해온 ‘블레이즈’가 이번 S급 승급 심사에서 또다시 고배를 마셨습니다. 협회 심사위원회는 “화력은 충분하나, 최근 발생한 이레귤러(이모지 등)의 변칙적인 공간 물리 무시 능력에 대응할 정밀도가 부족하다”고 판단 근거를 밝혔습니다.')">
+        <h4>[히어로 랭킹] A급 히어로 ‘블레이즈’, S급 승급 심사 탈락</h4>
+        <p>[HA] 중앙 등급 심사위원회</p>
+    </div>
+    <div class="card" onclick="showModal('[단독] ‘갓 슬레이어’의 공포, 빌런 협회 내부 인테리어까지 침식?', '[제2지구=빌런 동향 보고] 최근 세계 1위 히어로를 단 일격에 쓰러뜨리며 빌런계의 정점에 선 ‘갓 슬레이어(본명: 설모모)’의 행보가 기괴함을 넘어 공포를 자아내고 있습니다. 첩보에 따르면, 빌런 협회 본부의 살벌했던 지하 벙커가 최근 핑크색 커튼과 푹신한 소파로 가득 찬 일명 ‘마왕성’으로 개조되었다고 합니다.\n\n현장 요원들은 이를 두고 “희생자의 선혈을 상징하는 광기의 인테리어”라며 경악을 금치 못하고 있습니다. 특히 설모모가 소환하는 ‘맹독성 분홍색 구체(복숭아)’는 닿기만 해도 생명력을 결정화시킨다는 소문이 돌아, 히어로 협회는 현재 복숭아 형태의 모든 물질에 대해 [최고 수준 경계령]을 발동했습니다.')">
+        <h4>[단독] ‘갓 슬레이어’의 공포, 빌런 협회 내부 인테리어까지 침식?</h4>
+        <p>[제2지구=빌런 동향 보고]</p>
+    </div>
+
+    <div class="section-label">KNOWLEDGE BASE</div>
+    <div class="card" onclick="showModal('[학술적 요약: 에테르 변동성에 따른 인류 진화와 사회 시스템의 재구축]', '1. 에테르(Ether)의 편재성과 초기 발현 양상\n대기 중 상존하는 초자연적 미입자인 ‘에테르(Ether)’는 특정 기점을 전후하여 지구 전역으로 확산되었다. 발현 초기, 에테르에 의한 신체 변이는 인구 극소수에게만 나타나는 이례적 현상이었으며, 의학계는 이를 원인 불명의 난치성 돌연변이로 규정하였다. 이 시기 대중이 느낀 실존적 공포와 불확실성은 극심한 사회적 혼란과 아노미(Anomie) 상태를 초래하였다.\n\n2. 임계점 도달과 이능력 시대의 도래\n대기 내 에테르 농도가 물리적 임계점을 상회함에 따라, 인류의 약 50%가 보유한 변이 유전자가 연쇄적으로 활성화되는 ‘대각성(Great Awakening)’의 단계에 진입하였다. 기존의 물리 법칙을 상회하는 초월적 이능력자들의 등장은 근대 국가의 공권력과 물리적 통제력을 무력화시켰으며, 이는 곧 전통적 국가 시스템의 붕괴 위기로 직결되었다.\n\n3. 히어로 협회의 창설 및 등급제의 제도화\n무질서한 능력 발현에 대응하기 위해 국제적 공조 하에 ‘히어로 협회(Hero Association)’가 설립되었다. 협회는 자의적이고 파괴적인 이능력을 정량화된 지표로 환산하여 등급화함으로써, 초자연적 힘을 법적·제도적 관리 체계 내로 편입시키는 데 성공하였다. 이는 개인이 보유한 무력을 국가적 관리 자산으로 전환하는 중대한 사회적 합의였다.\n\n4. 현대 이능력 산업의 구조: 쇼비즈니스와의 결합\n현재 이능력은 단순한 물리적 억지력을 넘어, 자본주의 논리와 결합한 거대 산업 모델로 진화하였다. 등급화된 히어로 개개인은 하나의 브랜드이자 상품으로서 소비되며, 엔터테인먼트와 쇼비즈니스 산업의 중추적인 역할을 담당하고 있다. 이는 초자연적 현상이 사회적 규범과 시장 경제 체제 속에 완전히 동화되었음을 시사한다.')">
+        <h4>에테르 변이현상의 역사: 인류의 재설계</h4>
+        <p>Update: 2020.10.09</p>
+    </div>
+    <div class="card" onclick="showModal('등급 체계 가이드', '◈ S급 (재해): 국가 존망을 결정짓는 대륙급 영향력.\n◈ A급 (도시): 도시 하나를 단독으로 파괴하거나 수호 가능.\n◈ B급 (전술): 상위 10%. 대형 건물 붕괴 규모의 화력\n◈ C급 (전술): 일반적인 전투 요원.\n◈ D/E급: 생활 밀착형 능력자. 전투 부적합.\n◈ F급: 이능력이 없는 일반인.')">
+        <h4>등급 체계 가이드</h4>
+        <p>Update: 2025.08.27</p>
+    </div>
+    <div class="card" onclick="showModal('발신: 히어로 협회(HA) 등급 사정국 / 전략 기획실', '1. 개요\n에테르 농도 임계점 돌파 이후, 인류의 50%가 각성함에 따라 발생하는 사회적 혼란을 방지하기 위해 본 협회는 이능력자를 [소속]과 [행동 성향]라는 두 가지 핵심 축으로 분류하여 관리한다. 특히 최근 급증하는 ‘이레귤러’에 대한 엄격한 구분을 지향한다.\n\n2. 소속에 따른 분류 체계\n◈ 공인 히어로: 협회 라이선스를 취득한 정부 공인 능력자. 협회 시스템 내 실시간 위치 추적 및 활동 지원. 쇼비즈니스적 자산으로 보호.\n◈ 빌런 (연합): 반사회적 목적을 가진 조직적 범죄 집단. 발견 즉시 교전 허가. 등급에 따른 무력 진압 프로세스 가동.\n◈ 무능력자: 에테르 변이 유전자가 미활성화된 인구(50%). 보호 대상. 이능력 관련 범죄로부터의 격리 및 구호 우선.\n◈ 이레귤러 (Irregular): 무면허·무소속 불법 능력자. 시스템 외 권외자. 최고 수준 수사 대상. 명령 체계가 부재하여 행동 예측 불가. 독자적 위험군으로 분류.\n\n3. 이레귤러(Irregular) 상세 식별 기준\n이레귤러는 협회의 통제권 밖에 존재하며, 그 성향에 따라 다음과 같이 세분화하여 대응한다.\n\n◈ 무소속 빌런: 조직에 얽매이지 않고 개인의 욕구나 신념(예: 능력자 지배 사상)에 따라 파괴 행위를 일삼는 자.\n◈ 무소속 히어로 (자경단): 라이선스 없이 독자적으로 빌런을 사냥하거나 재해에 개입하는 자. 협회는 이들을 잠재적 범죄자로 간주함.\n◈ 특수 경계 대상: 특정할 수 없는 행동 원리를 가진 이레귤러.')">
+        <h4>[보고서] 이능력자 사회적 분류 및 대응 프로토콜 (v.4.02)</h4>
+        <p>Update: 2026.02.11</p>
+    </div>
+
+    <div class="search-area">
+        <div class="section-label">SUBJECT IDENTIFICATION</div>
+        <input type="text" class="search-input" placeholder="코드네임 또는 지문 데이터...">
+        <div style="font-size: 0.65rem; color: var(--sub); margin-top: 15px; text-align: center;">LOGS FOUND IN CACHE</div>
+        <div style="text-align:center;">
+            <div class="recent-tag" onclick="showReport()"># 이모지 (EMOJI) - S-CLASS</div>
+        </div>
+    </div>
+</div>
+
+<div id="report-page" class="container">
+    <div onclick="location.reload()" style="color: var(--neon); font-size: 0.75rem; margin-bottom: 25px; cursor:pointer; opacity: 0.7;">[ ◀ RETURN TO DATABASE ]</div>
+    
+    <div class="profile-section">
+        <div class="profile-img">
+            <img src="https://raw.githubusercontent.com/ogingoh88-lgtm/-3/refs/heads/main/Screenshot_20260210_225414_Gallery_Original.jpeg" alt="Emoji Profile">
+        </div>
+        <div class="brief-info">
+            <h2 style="letter-spacing: 2px;">이모지</h2>
+            <div style="font-size: 0.65rem; color: var(--danger); font-weight: bold; margin-bottom: 5px;">TYPE-IRREGULAR</div>
+            <table class="brief-table">
+                <tr><td class="label">CODE</td><td>HA-S-0401</td></tr>
+                <tr><td class="label">SECRET</td><td>1급 (심사관 및 S급 히어로 이상 열람 가능)</td></tr>
+                <tr><td class="label">CLASS</td><td>S</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="detail-box">
+        <h3>1. 대상 인적 사항</h3>
+        <div class="neon-line"></div><p style="font-size:0.8rem; color:var(--sub); margin:0; line-height: 1.5;"><strong>◈ 코드명:</strong> 이모지 (Emoji)<br><br><strong>◈ 본명:</strong> 확인 불가 <br><br><strong>◈ 추정 연령:</strong> 20대 중반<br><br><strong>◈ 신분:</strong> S급 이레귤러 (무소속 빌런)<br><br><strong>◈ 위험도:</strong> 측정 불가</p>
+    </div>
+    <div class="detail-box">
+        <h3>2. 신체적 특징 및 식별 정보</h3>
+        <div class="neon-line"></div><p style="font-size:0.8rem; color:var(--sub); margin:0; line-height: 1.5;"><strong> ◈ 외형:</strong> 노란색 자켓, 하얀색 후드티, 카고 바지 등 스트릿 웨어 착용.<br><br><strong>◈ 특이사항: </strong>얼굴 전체를 차단하는 백색 헬멧 상시 착용. 헬멧 전면 LED에 감정 상태를 나타내는 이모티콘 표출.<br><br><strong>◈ 메모리 누수 현상:</strong> 대상의 생체 정보는 디지털 및 물리적 기록 장치에서 실시간으로 손실됨. 육안 확인 시에도 인상이 흐릿하며, 차후 대다수의 목격자가 대상의 이목구비를 기억하지 못함. (헬멧의 잔상만이 유일한 고정 식별 표지임)</p>
+    </div>
+    <div class="detail-box">
+        <h3>3. 정신 감정 및 행동 패턴</h3>
+        <div class="neon-line"></div><p style="font-size:0.8rem; color:var(--sub); margin:0; line-height: 1.5;"><strong>◈ 성향:</strong> 혼돈 중립. 현실을 '완성도가 낮은 멀티플레이 게임'으로 인식함.<br><br><strong>◈ 위험성:</strong> 선악의 기준이 모호함. 기분에 따라 민간인을 구제하거나, 도시를 픽셀화하려 함.<br><br><strong>◈ 대인 관계:</strong> 타인을 NPC 혹은 이벤트 몹으로 취급하며 극도로 얕잡아봄. 다만, 특정 조건 하에 상대를 '플레이어'로 인식할 시 급격한 태도 변화를 보임.<br><br><strong>◈ 취약점:</strong> 능력 과부하 시 자신의 존재 데이터가 세계관 내에서 삭제될 위험이 있음. 또한, 이성과의 신체 접촉 및 정서적 교류 경험이 전무하여, 예상치 못한 친밀한 접근 시 논리 회로 정지(공황) 상태에 빠질 확률이 높음.</p>
+    </div>
+    <div class="detail-box">
+        <h3>4. 능력 분석: 픽셀 메이커</h3>
+        <div class="neon-line"></div><p style="font-size:0.8rem; color:var(--sub); margin:0; line-height: 1.5;"><strong>대상은 현실의 물리 법칙을 디지털 정보값으로 치환하는 인과율 간섭계 능력자임.</strong><br><br><strong>◈ 물질 픽셀화:</strong> 시야에 고정되거나 접촉한 사물을 정육면체 큐브(Pixel) 단위로 분해. 생명체 포함 모든 물리적 강도를 무시함.<br><br><strong>◈ 데이터 구현화:</strong> 대기 중 에테르를 응집시켜 사물 생성. 생성된 물체는 8비트 형태이나, 내부 속성(질량, 압력 등)을 임의로 조절 가능 (예: 1kg 크기의 망치에 10t의 질량 값 부여).<br><br><strong>◈ 글리치:</strong> 자신의 좌표를 0과 1의 중첩 상태로 전이. 모든 물리 공격을 투과시키며 프레임 단위의 초고속 이동을 수행함.<br><br><strong>◈ 패널티(추정):</strong> 메모리 누수 현상</p>
+    </div>
+
+<div class="detail-box" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+    <h3>5. 사건 파일</h3>
+    <div class="neon-line"></div>
+    
+    <div style="margin-bottom: 25px;">
+        <p style="font-size:0.85rem; color:var(--text); margin-bottom: 8px;">
+            <span class="super-bold" style="color: var(--neon);">#1: '망겜' 판정과 일방적 패치</span>
+        </p>
+        <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;">
+            <strong>◈ 일시:</strong> 2024년 5월 14일<br>
+            <strong>◈ 상황:</strong> 빌런 연합 하부 조직과 히어로 팀 '블루 가디언즈'의 시가전 중.<br>
+            <strong>◈ 기록:</strong> 대상(이모지)이 전장 한복판에 난입. 양측의 교전을 지켜보던 대상은 입으로 "띠링-♪" 소리를 내더니 헬멧 LED에 [?_?]를 띄움. 이후 "와, 밸런스 실화냐? 히어로 딜량이 이게 뭐야. 망겜이네."라고 발언.<br>
+            <strong>◈ 결과:</strong> 대상이 허공에 손을 휘두르자, 히어로 팀의 무기들이 전부 분홍색 픽셀로 변하며 타격치가 0으로 고정됨(너프). 반면 빌런들의 총기는 8비트 형태의 거대 레일건으로 치환됨. 양측이 당황하자 대상은 "밸런스 패치 완료! 자, 이제 다시 즐겜~"이라며 글리치 상태로 도주함.
+        </p>
+    </div>
+
+    <div class="neon-line" style="opacity: 0.3;"></div>
+
+    <div>
+        <p style="font-size:0.85rem; color:var(--text); margin-bottom: 8px;">
+            <span class="super-bold" style="color: var(--neon);">#2: 기행과 허당끼의 경계</span>
+        </p>
+        <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;">
+            <strong>◈ 일시:</strong> 2025년 01월 02일<br>
+            <strong>◈ 상황:</strong> 잠입 수사 중 편의점에서 조우.<br>
+            <strong>◈ 기록:</strong> 대상이 헬멧을 아주 살짝 들어 올리고 초코 맛 아이스크림을 먹으려 시도함. 그러나 입구 조절에 실패하여 아이스크림을 바닥에 떨어뜨림. 대상은 3초간 정지하더니 헬멧에 [ㅠ_ㅠ]를 띄우고 "아... 조작감 쓰레기네... 렉 걸렸어..."라며 중얼거림.<br>
+            <strong>◈ 특이사항:</strong> 바닥에 떨어진 아이스크림을 픽셀화시켜서 다시 공중에 띄우려다 실수로 편의점 냉동고 전체를 픽셀 큐브로 분해해 버림. 본인도 당황했는지 뒷걸음질 치다 자기 발에 걸려 넘어진 뒤 광속으로 도주.
+        </p>
+    </div>
+</div>
+   <div class="detail-box">
+        <h3>6. 특이사항</h3>
+        <div class="neon-line"></div>   
+        <div>
+        <p style="font-size:0.85rem; color:var(--text); margin-bottom: 8px;">
+            <span class="super-bold" style="color: var(--neon);">[특이사항: 인지 오염 및 데이터 누수 보고]</span>
+        </p><p style="font-size:0.8rem; color:var(--sub); margin:0; line-height: 1.5;"><strong>-보고자: 상급 수사관 J-</strong><br><br>본 수사관은 지난 11일, 대상과 가장 근거리(약 50cm)에서 대치하는 데 성공했다. 당시 상황은 매우 긴박했으며, 대상의 헬멧 유리가 일시적인 과부하로 인해 투명하게 변하는 '렌더링 오류' 현상이 발생했다.<br><br><strong>◈ 맨얼굴 목격 로그:</strong> 헬멧 안의 얼굴을 육안으로 확인했다. 분명히 보았다. 그는 검은 머리카락(혹은 연보라색이었나?)을 가졌고, 눈동자는... [기록이 물리적으로 훼손됨] ...매우 수려한 외모였던 것으로 기억한다. 그러나 보고서를 작성하는 지금, 그의 이목구비가 마치 저해상도 이미지처럼 머릿속에서 깨져 보인다. 눈이 컸는지, 입술이 어떠했는지 도무지 형상화할 수 없다.<br><br><strong>◈ 본명 청취 로그:</strong> 대상이 중얼거리는 소리를 들었다. "내 서버 이름은... [치이익- 노이즈]...야. 잊지 마, NPC 주제에." 분명히 세 글자의 이름이었다. 성은 '한'이었던 것..아니, '김'이였던 것 같기도 하다. 하지만 이름을 종이에 적으려는 순간, 
+       이름을 망각하게 되었다.<br><br><strong>◈ 수사관의 주관적 의견:</strong> "마치 세계(서버) 자체가 그의 정체를 기록하는 것을 거부하는 기분이다. 그와 대화를 나눈 지 1시간이 지나자, 나는 그가 무슨 옷을 입었는지조차 잊기 시작했다. 오직 노란 자켓과 그 기괴한 헬멧의 LED 잔상만이 뇌리에 강제로 박혀 있을 뿐이다. 그는 정말 이 세계의 존재가 맞는가?"</p>
+    </div> 
+    <div class="neon-line" style="opacity: 0.3;"></div>
+
+    <div>
+        <p style="font-size:0.85rem; color:var(--text); margin-bottom: 8px;">
+            <span class="super-bold" style="color: var(--neon);">[경고: 메모리 누수 현상 주의]</span>
+        </p>
+        <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;">대상의 본명이나 얼굴에 대해 집착하는 요원들은 공통적으로 '경미한 기억 상실'과 '현실 이질감'을 호소함. 대상의 데이터 수집 시, 반드시 백업 서버와 이중 기록 장치를 활용할 것.</p>
+    </div>
+</div>
+    <div class="secret-area" id="secret-section">
+        <div class="secret-overlay" onclick="unlock()">
+            <div style="color: var(--danger); font-weight: 900; letter-spacing: 3px; font-size: 1.2rem;">CLASSIFIED</div>
+            <div style="font-size:0.6rem; color:var(--sub); margin-top:8px;">CLICK TO DECRYPT PERSONAL DATA</div>
+        </div>
+        <div class="blur">
+            <div class="section-label" style="color:var(--danger)">RESTRICTED : 개인 데이터</div>
+            <div class="secret-photo-box">
+                <img src="https://raw.githubusercontent.com/ogingoh88-lgtm/-3/refs/heads/main/IMG_8382.png" alt="Emoji Real Identity">
+            </div>
+            <div class="neon-line" style="opacity: 0.3;"></div><span class="super-bold" style="color: var(--neon);">1. 지워진 신원</span>
+            <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;"><strong>◈ 본명:</strong> 한찬휘 (韓燦輝)<br><strong>◈ 나이:</strong> 26세<br><strong>◈ 각성 전 기록:</strong> 국내 유수의 게임 개발사 '네오-넥서스' 최연소 수석 최적화 프로그래머. 무능력자(F급) 시절, 물리 엔진과 서버 아키텍처 설계의 천재로 불림. 당시 기록에 따르면 "잠을 자지 않고 코드를 짜며, 카페인과 에너지 드링크로 연명하던 마른 체형의 청년"으로 묘사됨.</p>    
+        
+            <div class="neon-line" style="opacity: 0.3;"></div><span class="super-bold" style="color: var(--neon);">2. 가려진 외형</span>
+            <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;"><strong>◈ 맨얼굴:</strong> 새하얀 피부에 토끼와 고양이가 섞인 듯한 수려한 외모.<br><strong>◈ 헤어:</strong> 본래 흑발이었으나, 이능력 각성 이후 빛의 각도에 따라 연보라색과 백색이 감도는 신비로운 색으로 변이됨.<br><strong>◈ 눈동자:</strong> 깊은 연보라색.<br><strong>◈ 신체:</strong> 180cm. 마른 슬렌더 체형이나, 각성 이후 강화된 신체 데이터로 인해 유연하고 탄탄한 잔근육이 잡혀 있음.<br><strong>◈ 특이사항:</strong> 목덜미와 귀 뒤쪽의 피부가 매우 얇고 민감함. (상시 헬멧 착용으로 인해 외부 자극에 대한 저항력이 낮아진 상태)</p>
+        
+            <div class="neon-line" style="opacity: 0.3;"></div><span class="super-bold" style="color: var(--neon);">3. 사라진 인과율</span>
+            <p style="font-size:0.8rem; color:var(--sub); line-height: 1.6;"><strong>◈ 가족 및 지인:</strong> 각성 직후 발생한 '메모리 누수'로 인해 부모, 친구, 직장 동료들의 기억 속에서 한찬휘라는 이름이 완전히 소거됨.<br><strong>◈ 주거지:</strong> 그가 살던 원룸의 계약서, 주민등록표 등 모든 행정 서류가 백지로 변함.<br><strong>◈ 현재 상태:</strong> 세계라는 거대한 게임 서버에서 '버그'로 분류되어 끊임없이 삭제 시도를 당하는 중.</p>
+            </div> 
+        </div>
+    </div>
+</div>
+
+<div id="content-modal" onclick="closeModal()">
+    <div class="modal-window" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="modal-title" style="color: var(--neon); margin: 0; font-size: 1.1rem;"></h3>
+        </div>
+        <div class="modal-content" id="modal-body" style="font-size: 0.85rem; line-height: 1.7; color: var(--text);">
+        </div>
+        <div class="modal-footer">
+            <button class="recent-tag" style="width:100%; margin-top: 0;" onclick="closeModal()">[ SYSTEM CONFIRM ]</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showReport() {
+        document.getElementById('home-page').style.display = 'none';
+        document.getElementById('report-page').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    /* 모달 열기 */
+    function showModal(title, body) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-body').innerText = body;
+        const modal = document.getElementById('content-modal');
+        modal.style.display = 'flex'; // 중앙 정렬을 위해 flex
+        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+    }
+
+    /* 모달 닫기 */
+    function closeModal() {
+        document.getElementById('content-modal').style.display = 'none';
+        document.body.style.overflow = 'auto'; // 배경 스크롤 복원
+    }
+
+    function unlock() {
+        if(confirm("미공개 데이터를 열람하시겠습니까? 스포가 포함되어 있습니다.")) {
+            document.getElementById('secret-section').classList.add('unlocked');
+        }
+    }
+</script>
+
+</body>
+</html>
