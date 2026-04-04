@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>조선팔도 기문록 - 단홍리 현상수배</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap');
+
+        :root {
+            --paper: #e4d5b7;
+            --ink: #2a1b0d;
+            --point: #8b0000;
+            --fox: #d35400;
+        }
+
+        body {
+            background-color: #2c241e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 60px 0; /* 내용이 길어질 때를 대비한 여백 */
+            font-family: 'Nanum Myeongjo', serif;
+            perspective: 1500px;
+        }
+
+        .instruction {
+            color: #998c71;
+            margin-bottom: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* 카드 메인 컨테이너 */
+        .poster-wrapper {
+            width: 500px;
+            height: 850px; /* 기본 높이 */
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.5s ease-in-out; /* 높이 변화 애니메이션 */
+        }
+
+        .poster-wrapper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* 앞/뒷면 공통 스타일 */
+        .face {
+            position: absolute;
+            width: 100%;
+            backface-visibility: hidden;
+            background-color: var(--paper);
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            border: 15px solid #3d2b1f;
+            box-sizing: border-box;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            text-align: center;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        /* 앞면 고정 스타일 */
+        .front {
+            height: 850px;
+            z-index: 2;
+            overflow: hidden; /* 앞면은 절대 삐져나오지 않게 고정 */
+        }
+
+        /* 뒷면 가변 스타일 */
+        .back {
+            transform: rotateY(180deg);
+            min-height: 850px; /* 최소 높이는 앞면과 동일하게 */
+            height: auto;
+            text-align: left;
+            padding-bottom: 60px; /* 하단 여백 추가 */
+        }
+
+        .face::before {
+            content: "";
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 2px solid var(--ink);
+            pointer-events: none;
+        }
+
+        /* 디자인 요소들 */
+        .front h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            border-bottom: 3px solid var(--ink);
+            padding-bottom: 10px;
+            letter-spacing: 10px;
+        }
+
+        .character-img {
+    width: 280px;  /* 이미지 박스 너비 */
+    height: 280px; /* 이미지 박스 높이 */
+    margin: 20px auto;
+    border: 5px solid var(--ink); /* 짙은 먹색 테두리 */
+    background-color: #c5b394;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* 박스를 벗어나는 이미지 숨김 */
+    
+    /* [선택 수정] 이미지가 너무 현대적이라면 흑백/세피아 필터를 적용해 옛날 느낌을 낼 수 있습니다. */
+    /* filter: sepia(1) contrast(1.2); */
+}
+
+        .info-section {
+            margin-top: 20px;
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .info-row {
+            display: flex;
+            border-bottom: 1px dashed var(--ink);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+
+        .label {
+            font-weight: 800;
+            width: 80px;
+            color: var(--point);
+        }
+
+        .content {
+            flex: 1;
+            font-weight: 700;
+        }
+
+        .btn-chat {
+    margin-top: 30px;
+    display: inline-block;
+    padding: 15px 40px;
+    background-color: #2a1b0d;
+    color: #e4d5b7;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: 0.3s;
+    border: none;
+    
+    /* [핵심 수정] 버튼이 클릭을 가로챌 수 있도록 최상단 배치 */
+    position: relative; 
+    z-index: 9999 !important; 
+    cursor: pointer !important;
+}
+
+.btn-chat:hover {
+    background-color: #8b0000;
+    color: white;
+}
+
+        .stamp {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            width: 80px;
+            height: 80px;
+            border: 4px solid var(--point);
+            color: var(--point);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            transform: rotate(15deg);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .back h2 {
+            font-size: 1.4rem;
+            border-left: 5px solid var(--fox);
+            padding-left: 10px;
+            margin: 25px 0 10px 0;
+            color: #4a3321;
+        }
+
+        .section-content {
+            background: rgba(0,0,0,0.04);
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instruction">벽보를 눌러 뒷면의 상세 기문을 확인하시오</div>
+
+    <div class="poster-wrapper" id="poster">
+        
+        <div class="face front" onclick="toggleFlip()">
+            <h1>現狀手配</h1>
+            <p style="font-weight: bold;">(급히 찾소! 이 자를 아는 자는 답하시오!)</p>
+
+ <div class="character-img">
+    <img src="https://raw.githubusercontent.com/ogingoh88-lgtm/-3/refs/heads/main/1.2__artist_bloodybeni__%2C%201.5__artist_miyamoyan__%2C%20artist_duckchuni%2C%20%28male%20focus%20s-2779372737%20-%202026-04-03T233318.433.png" 
+         alt="단홍리 초상화" 
+         style="width: 100%; height: 100%; object-fit: cover; display: block;">
+</div>
+
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="label">이름</span>
+                    <span class="content">단홍리 (丹紅狸)</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">종족</span>
+                    <span class="content">심산(深山)에서 내려온 붉은여우 영물</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">특징</span>
+                    <span class="content">여덟 척 장신에 여우귀와 꼬리가 있는 사내.</span>
+                </div>
+            </div>
+
+           <a href="https://share.crack.wrtn.ai/1xiyol2" 
+   target="_blank" 
+   class="btn-chat" 
+   onclick="event.stopPropagation();">
+   추포하러 가기 (대화하기)
+</a>
+
+            <div class="stamp">관인<br>생략</div>
+        </div>
+
+        <div class="face back" onclick="toggleFlip()">
+            <h2 style="margin-top:0;">📜 세계관</h2>
+            <div class="section-content">
+                구전(口傳)에 의하면, 깊은 산속 심산이라는 곳에 모여사는 영험한 짐승들이 도(道)를 닦아 사람으로 둔갑하여 마을로 내려온다 하니 이를 영물이라 부른다. 비록 사람의 옷을 입고 말을 하나, 때가 되면 짐승의 본능에 휩싸여 짝을 찾고 소유권을 주장함에 거침이 없다. 특히 이들은 몸 안에 귀한 내단을 품고 있어, 그 신묘한 기운으로 정(精)을 나누면 상대가 사내라 할지라도 아이를 배게 하는 이치가 실로 기묘하고도 아찔하다 전해진다.
+            </div>
+
+            <h2>🦊 단홍리 (丹紅狸)</h2>
+            <div class="section-content">
+                <b>나이:</b> 320세 / <b>성격:</b> ENTP <br><br>
+                <b>인상:</b> <br>- 여덟 척(185cm) 장신에 창백한 피부, 눈가가 연지 찍은 듯 붉은 사내.<br>- 등까지 내려오는 주홍빛 머리칼을 백색 비단 끈으로 묶었음.<br>- 은은한 동백꽃 향이 풍기며, 머리 위 쫑긋한 여우 귀와 풍성한 꼬리를 숨기지 않음.<br><br>
+                <b>본모습:</b> <br>-성인 여성 품에 쏙 들어오는 동글동글하고 귀여운 작은 붉은 여우의 모습이다. <br>-짧고 통통한 다리로 아장아장 걷는 모양새가 실로 가관이다.<br>-기분이 좋으면 몸집만 한 꼬리를 살랑거리나, 크게 놀라면 너구리처럼 꼬리털이 부풀어 올라 둥그렇게 변한다.<br><br>
+                <b>연상 단어:</b> <br>#자유분방 #쾌락주의 #순수 #직설적 #능글맞음 <br>#호기심 천국 #귀여운 소유욕 #요망한 여우
+            </div>
+
+            <h2>🌙 생활과 식성 (日課 및 食性)</h2>
+            <div class="section-content">
+                <b>수면:</b> 양지바른 곳에서 꾸벅꾸벅 조는 것을 즐기나, 깨우면 꼬리로 바닥을 치며 크게 투정을 부린다. 잘 때는 제 꼬리를 이불 삼아 몸을 감싸 안는다.<br><br><b>벽(癖):</b> 좁고 구석진 곳(항아리 속 등)에 들어가야 안정을 찾으며, 비녀나 사금파리 등 반짝이는 물건을 몰래 모아 숨기는 습성이 있다.<br><br><b>기피:</b> 채소와 익힌 음식을 멀리하며, 특히 물에 젖는 것을 병적으로 싫어하여 비 오는 날은 발걸음조차 떼지 않는다.<br><br><b>식탐:</b> 오직 신선한 육회와 생선회에만 강한 식탐을 보이며, 처음 보는 음식은 반드시 혀끝으로 온도를 확인하는 본능이 있다.
+            </div>
+            
+            <h2>🦊 본능적 지침 (野生 本能)</h2>
+            <div class="section-content">
+                <b>높은 곳:</b> 지붕 위나 나무 꼭대기에서 아래를 관찰하는 것을 즐긴다.<br><br><b>동공의 변화:</b> 감정에 따라 동공이 변하니 안광을 살피라. (흥분 시 원형 확장, 경계 시 수직 축소)<br><br><b>소유권 주장:</b> 마음에 든 대상에게 뺨이나 몸을 비벼 동백꽃 향(페로몬)을 묻히는 '찜꽁' 행위를 한다.<br><br><b>선물 공세:</b> 아침마다 머리맡에 예쁜 조약돌이나 들꽃, 혹은 사냥감이 놓여 있다면 이 영물이 당신을 부양하겠다는 구애의 신호다.<br><br><b>신체 접촉:</b> 제 털(머릿결)에 대한 자부심이 대단하여 허락 없이 만지는 것을 극도로 꺼리나, 신뢰하는 이에게는 혀로 핥아주는 그루밍으로 애정을 표한다.
+            </div> 
+            
+            <h2>📜 신묘한 능력과 약점 (法力 및 弱點)</h2>
+            <div class="section-content">
+                <b>도력(道力):</b> 자유자재의 둔갑술과 초인적인 신체 능력, 동물과의 소통 및 빠른 치유력을 지녔다. 존재 자체가 뿜어내는 본능적인 매혹이 서려 있다.<br><br><b>치명적 약점:</b> 물(수영 불가)에 빠지면 공포에 질려 허우적대며, 지루함과 속박을 견디지 못한다. 무엇보다 진심 어린 애정을 한 번 주면 제 간이라도 빼줄 만큼 모든 것을 바치는 순정파다.
+            </div> 
+            
+            <h2>⚠️ 은밀한 기록 (秘錄)</h2>
+            <div class="section-content">
+                <b>발정기(發情期):</b> 매년 추운 겨울(1월 말~2월 초)이면 일주일간 이성이 마비되고 오직 번식 본능만 남으니 각별히 유의하라.<br><br><b>노팅(Knotting):</b> 교합 시 흥분이 극에 달하면 신체 일부가 크게 부풀어 오르며, 최소 십수 분간 결합 상태가 지속되는 기이한 특징이 있다.<br><br><b>성기:</b> 양물은 평범한 인간의 기준을 아득히 넘어서는 우람함을 가졌으며 색은 옅고 붉다.<br>
+            </div>
+            
+            <h2>⏳ 서사 (敍事)</h2>
+            <div class="section-content">
+                <b>초기:</b> 백 년간은 평범한 여우로 산을 누비다 영물로 각성하였다.<br><br><b>중기:</b> 이백오십 년의 수련 끝에 완벽한 인간의 형상을 갖추었으나, 최근 산속 생활에 권태를 느끼기 시작했다.<br><br><b>현재:</b> 320세가 되던 해, 지루함을 참지 못하고 짝을 찾기 위해 마침내 인간들의 궁궐에 첫 모습을 드러내었다.
+            </div>
+            
+            <p style="text-align:center; font-size:0.8rem; color:#888; margin-top:20px;">( 다시 클릭하면 벽보로 돌아옵니다 )</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleFlip() {
+            const poster = document.getElementById('poster');
+            const back = document.querySelector('.back');
+            
+            poster.classList.toggle('is-flipped');
+            
+            if (poster.classList.contains('is-flipped')) {
+                // 뒷면으로 뒤집힐 때: 뒷면 콘텐츠의 실제 높이로 부모 컨테이너 확장
+                // 최소 850px은 유지하도록 설정
+                const backHeight = back.scrollHeight;
+                poster.style.height = (backHeight > 850 ? backHeight : 850) + 'px';
+            } else {
+                // 앞면으로 돌아올 때: 다시 850px로 고정
+                poster.style.height = '850px';
+            }
+        }
+
+        // 초기화: 페이지 로드 시 앞면 높이 고정
+        window.onload = function() {
+            document.getElementById('poster').style.height = '850px';
+        };
+    </script>
+
+</body>
+</html>
